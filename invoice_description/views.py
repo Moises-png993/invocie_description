@@ -1,6 +1,8 @@
-from django.shortcuts import render
-from django.http import HttpResponse
-from .forms import PDFUploadForm
+from django.utils.http import quote  
+import os
+from django.shortcuts import render 
+from django.http import HttpResponse 
+from .forms import PDFUploadForm 
 from .utils import reemplazar_codigos_pdf, reemplazar_texto_pdf
 
 def procesar_pdf(request):
@@ -17,10 +19,15 @@ def procesar_pdf(request):
             if bultos:
                 pdf_editado = reemplazar_texto_pdf(pdf_editado, "BULTOS", bultos)
 
+            # 🔹 Concatenar "E" al nombre original
+            nombre, extension = os.path.splitext(archivo.name)
+            nuevo_nombre = f"{nombre}E{extension}"
+
             response = HttpResponse(pdf_editado, content_type="application/pdf")
-            response['Content-Disposition'] = 'attachment; filename="pdf_editado.pdf"'
+            response['Content-Disposition'] = f'attachment; filename="{quote(nuevo_nombre)}"'
             return response
     else:
         form = PDFUploadForm()
     return render(request, "invoice_description/procesar_pdf.html", {"form": form})
+
 
