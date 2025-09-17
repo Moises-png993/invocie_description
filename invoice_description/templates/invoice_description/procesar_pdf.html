@@ -22,6 +22,7 @@
       text-align: center;
       width: 100%;
       max-width: 400px;
+      position: relative;
     }
 
     h1 {
@@ -53,27 +54,136 @@
       cursor: pointer;
       font-size: 16px;
       transition: background 0.3s;
+      position: relative;
     }
 
     button:hover {
       background: #357ab8;
     }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #4a90e2;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-left: 10px;
+      vertical-align: middle;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Subir PDF para procesar</h1>
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
+    <h1>Subir PDF</h1>
 
+    <!-- Formulario para procesar PDF -->
+    <form id="form-procesar">
+      {% csrf_token %}
       <label for="id_archivo">Seleccionar PDF:</label>
       <input type="file" name="archivo" id="id_archivo" required>
 
       <label for="id_bultos">Cantidad de bultos:</label>
       <input type="text" name="bultos" id="id_bultos" placeholder="Ejemplo: 100">
 
-      <button type="submit">Procesar PDF</button>
+      <div class="button-group">
+        <button type="submit">
+          Procesar PDF
+          <span class="spinner"></span>
+        </button>
+      </div>
+    </form>
+
+    <hr style="margin: 20px 0;">
+
+    <!-- Formulario para convertir PDF a XLSX -->
+    <form id="form-convertir">
+      {% csrf_token %}
+      <label for="id_archivo2">Seleccionar PDF:</label>
+      <input type="file" name="archivo" id="id_archivo2" required>
+
+      <div class="button-group">
+        <button type="submit">
+          Convertir a XLSX
+          <span class="spinner"></span>
+        </button>
+      </div>
     </form>
   </div>
+
+  <script>
+    async function handleFormSubmit(form, url) {
+      const button = form.querySelector('button');
+      const spinner = button.querySelector('.spinner');
+
+      // Mostrar spinner y deshabilitar botón
+      spinner.style.display = 'inline-block';
+      button.disabled = true;
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
+          }
+        });
+
+        if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+        // Convertir la respuesta en blob (archivo)
+        const blob = await response.blob();
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'archivo_descargado';
+
+        // Extraer nombre de archivo si existe y decodificar
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+          filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
+          filename = decodeURIComponent(filename); // Decodifica espacios y caracteres especiales
+        }
+
+        // Crear enlace temporal y descargar archivo
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        alert('Ocurrió un error: ' + err.message);
+      } finally {
+        // Ocultar spinner y habilitar botón
+        spinner.style.display = 'none';
+        button.disabled = false;
+      }
+    }
+
+    document.getElementById('form-procesar').addEventListener('submit', function(e){
+      e.preventDefault();
+      handleFormSubmit(this, "{% url 'procesar_pdf' %}");
+    });
+
+    document.getElementById('form-convertir').addEventListener('submit', function(e){
+      e.preventDefault();
+      handleFormSubmit(this, "{% url 'convert_pdf_to_xlsx' %}");
+    });
+  </script>
 </body>
 </html>
+

@@ -17,9 +17,10 @@ Including another URLconf
 # impex/urls.py
 from django.contrib import admin
 from django.urls import path
-from invoice_description.views import procesar_pdf
+from invoice_description.views import procesar_pdf, convert_pdf_to_xlsx
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('procesar-pdf/', procesar_pdf, name='procesar_pdf'),
+    path('convertir-pdf/', convert_pdf_to_xlsx, name='convert_pdf_to_xlsx'),
 ]
