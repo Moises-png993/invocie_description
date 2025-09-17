@@ -64,3 +64,27 @@ def reemplazar_texto_pdf(file_obj, buscar, reemplazar):
     doc.close()
     salida.seek(0)
     return salida
+
+def agregar_simbolo_dollar(file_obj):
+    reemplazos = [
+        ("FLETE", "$", 130, 6),
+        ("SEGURO", "$", 135, 6)
+    ]
+
+    doc = fitz.open(stream=file_obj.read(), filetype="pdf")
+
+    for pagina in doc:
+        for buscar, reemplazar, x_offset, y_offset in reemplazos:
+            instancias = pagina.search_for(buscar)
+            for rect in instancias:
+                # Ajusta el rectángulo y punto de inserción
+
+                punto = fitz.Point(rect.x0 + x_offset + 2, rect.y0 + y_offset)
+
+                pagina.insert_text(punto, reemplazar, fontsize=8, color=(0, 0, 0))
+    salida = io.BytesIO()
+    doc.save(salida)
+    doc.close()
+    salida.seek(0)
+    return salida
+

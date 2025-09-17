@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 from .forms import PDFUploadForm
-from .utils import reemplazar_codigos_pdf, reemplazar_texto_pdf
+from .utils import reemplazar_codigos_pdf, reemplazar_texto_pdf,  agregar_simbolo_dollar
 
 # 🔹 Credenciales Aspose
 CLIENT_ID = "7dd92a9b-3454-4779-832f-74a51436800c"
@@ -36,6 +36,7 @@ def procesar_pdf(request):
             # 🔹 Reemplazar artículos desde la DB
             pdf_editado = reemplazar_codigos_pdf(archivo)
 
+            pdf_editado = agregar_simbolo_dollar(pdf_editado)
             # 🔹 Reemplazar "BULTOS" si se indica
             if bultos:
                 pdf_editado = reemplazar_texto_pdf(pdf_editado, "BULTOS", bultos)
