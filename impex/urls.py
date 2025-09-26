@@ -18,8 +18,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from invoice_description.views import procesar_pdf, convert_pdf_to_xlsx
+from simpex.views import login_view
 
 urlpatterns = [
+    path('', login_view, name='login'),
     path('admin/', admin.site.urls),
     path('pdf/', procesar_pdf, name='procesar_pdf'),
     path('convertir-pdf/', convert_pdf_to_xlsx, name='convert_pdf_to_xlsx'),
