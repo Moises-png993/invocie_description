@@ -5,6 +5,7 @@ from simpex.models import Contenedor
 admin.site.site_header = "Impex Administration"  
 admin.site.site_title = "Impex Admin Portal"      
 admin.site.index_title = "Impex Administration"  
+admin.site.site_url = "/app/home"  
 @admin.register(Articulo)
 class ArticuloAdmin(ImportExportModelAdmin):
     list_display = ('codigo', 'descripcion')
