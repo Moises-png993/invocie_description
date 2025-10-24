@@ -5,13 +5,23 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.conf import settings
 from .forms import PDFUploadForm
-from .utils import reemplazar_codigos_pdf, reemplazar_texto_pdf,  agregar_simbolo_dollar
+from .utils import reemplazar_codigos_pdf, reemplazar_texto_pdf,  agregar_simbolo_dollar, reemplazar_origen_pdf
+from jwt_utils import require_jwt
+
+# Nuevo: imports para JWT
+import jwt
+from datetime import datetime, timedelta
+from django.contrib.auth.models import User
+from functools import wraps
+from django.contrib import messages
+from django.shortcuts import redirect
 
 # 🔹 Credenciales Aspose
 CLIENT_ID = "7dd92a9b-3454-4779-832f-74a51436800c"
 CLIENT_SECRET = "1a1b6f4f7c7aecae9441abf0413874f9"
 STORAGE_NAME = "Facturas"
 
+# Función para obtener token de Aspose
 def get_auth_token():
     url = "https://api.aspose.cloud/connect/token"
     data = {
@@ -26,6 +36,7 @@ def get_auth_token():
 # -----------------------------------------
 # Vista 1: Reemplazar códigos y BULTOS en PDF
 # -----------------------------------------
+@require_jwt
 def procesar_pdf(request):
     if request.method == "POST":
         form = PDFUploadForm(request.POST, request.FILES)
@@ -37,6 +48,8 @@ def procesar_pdf(request):
             pdf_editado = reemplazar_codigos_pdf(archivo)
 
             pdf_editado = agregar_simbolo_dollar(pdf_editado)
+
+            pdf_editado = reemplazar_origen_pdf(pdf_editado)
             # 🔹 Reemplazar "BULTOS" si se indica
             if bultos:
                 pdf_editado = reemplazar_texto_pdf(pdf_editado, "BULTOS", bultos)
@@ -56,6 +69,7 @@ def procesar_pdf(request):
 # -----------------------------------------
 # Vista 2: Convertir PDF a XLSX usando Aspose
 # -----------------------------------------
+@require_jwt
 def convert_pdf_to_xlsx(request):
     if request.method == "POST":
         form = PDFUploadForm(request.POST, request.FILES)

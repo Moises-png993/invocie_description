@@ -7,3 +7,10 @@ class Articulo(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.descripcion}"
+    
+class Origen(models.Model):
+    codigo = models.CharField(max_length=50, unique=True)
+    origen = models.TextField()
+
+    def __str__(self):
+        return f"{self.codigo} - {self.descripcion}"
