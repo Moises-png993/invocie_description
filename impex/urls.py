@@ -26,4 +26,5 @@ urlpatterns = [
     path('pdf/', procesar_pdf, name='procesar_pdf'),
     path('convertir-pdf/', convert_pdf_to_xlsx, name='convert_pdf_to_xlsx'),
     path('app/', include('simpex.urls')),
+    path('factores/', include('factores.urls')),
 ]

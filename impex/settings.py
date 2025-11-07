@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'invoice_description',
     'import_export',
     'simpex',
+    'factores'
 ]
 
 MIDDLEWARE = [

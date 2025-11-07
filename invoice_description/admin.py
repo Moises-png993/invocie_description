@@ -2,10 +2,13 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from .models import Articulo, Origen
 from simpex.models import Contenedor
+from factores.models import Flete, Unidades
+
 admin.site.site_header = "Impex Administration"  
 admin.site.site_title = "Impex Admin Portal"      
 admin.site.index_title = "Impex Administration"  
 admin.site.site_url = "/app/home"  
+
 @admin.register(Articulo)
 class ArticuloAdmin(ImportExportModelAdmin):
     list_display = ('codigo', 'descripcion')
@@ -25,3 +28,19 @@ class ContenedorAdmin(ImportExportModelAdmin):
     )
     list_filter = ('pais', 'status', 'transporte')
     search_fields = ('embarque', 'expediente', 'pais', 'transporte')
+
+@admin.register(Flete)
+class ContenedorAdmin(ImportExportModelAdmin):
+    list_display = (
+        'pais', 'flete_ipl', 'flete_blue', 'flete_directo',
+    )
+    list_filter = ('pais', 'flete_ipl', 'flete_blue', 'flete_directo')
+    search_fields = ('pais', 'flete_ipl', 'flete_blue', 'flete_directo')
+
+@admin.register(Unidades)
+class ContenedorAdmin(ImportExportModelAdmin):
+    list_display = (
+        'grupo_articulo', 'unidades_contenedor', 'unidades_cbm'
+    )
+    list_filter = ('grupo_articulo', 'unidades_contenedor', 'unidades_cbm')
+    search_fields = ('grupo_articulo', 'unidades_contenedor', 'unidades_cbm')
