@@ -25,7 +25,12 @@ SECRET_KEY = 'django-insecure-zi0y2r%ib260p)cz*u-3ene(p#cfyrwcity49=xf3rftjvm)*$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*", ".onrender.com", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["*", ".onrender.com", "localhost", "127.0.0.1", "adoc-impex.duckdns.org",]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://adoc-impex.duckdns.org",
+    "http://adoc-impex.duckdns.org",
+]
 
 
 # Application definition
