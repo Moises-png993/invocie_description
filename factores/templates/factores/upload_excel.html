@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Factores</title>
+    <title>Estimación de Costo Estándar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -395,8 +395,12 @@
     <nav class="navbar navbar-expand-lg px-3">
         <div class="container-fluid">
             <span class="navbar-brand">
-                <i class="bi bi-calculator"></i> Gestión de Factores
+                <i class="bi bi-calculator"></i>Estimación de Costo Estándar
             </span>
+             <!-- Botón para ir al HOME -->
+        <a href="/app/home/" class="btn btn-primary ms-3">
+            <i class="bi bi-house-door"></i> Home
+        </a>
             <button class="btn btn-light ms-auto" data-bs-toggle="modal" data-bs-target="#mantenimientoModal">
                 <i class="bi bi-upload"></i> Actualizar Datos
             </button>
@@ -442,23 +446,23 @@
 
         <!-- SECCIÓN PROCESAR FACTORES -->
         <div class="card-container">
-            <h2><i class="bi bi-calculator-lg"></i> Procesar Factores</h2>
+            <h2><i class="bi bi-calculator-lg"></i> Subir Plantilla</h2>
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="upload-section section-cantidades mb-2">
                     <label class="upload-label" for="id_file_fob">
                         <i class="bi bi-file-earmark-spreadsheet"></i>
-                        Selecciona archivo Excel con Factores
+                        Selecciona archivo Excel
                     </label>
                     {{ form.file_fob }}
                 </div>
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-play-circle"></i> Procesar Datos
+                <button type="submit" class="btn btn-primary w-20">
+                    <i class="bi bi-play-circle"></i> Calcular
                 </button>
             </form>
         </div>
 
-        <!-- SELECCIÓN DE PAÍSES -->
+        <!-- SELECCIÓN DE PAÍSES 
         <div class="card-container">
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -497,7 +501,7 @@
                     </div>
                 </div>
             </form>
-        </div>
+        </div>-->
 
         <!-- RESULTADOS -->
         {% if tabla_resultado %}
@@ -554,7 +558,7 @@
                         <div class="upload-section section-fob mb-3">
                             <label class="upload-label" for="id_file_cantidades">
                                 <i class="bi bi-file-earmark-spreadsheet"></i>
-                                Cantidades por Artículo
+                                Cantidades por MDG
                             </label>
                             {{ form.file_cantidades }}
                         </div>
@@ -562,7 +566,7 @@
                         <div class="upload-section section-fletes mb-3">
                             <label class="upload-label" for="id_file_fletes">
                                 <i class="bi bi-file-earmark-spreadsheet"></i>
-                                Flete por Ruta
+                                Flete por Origen
                             </label>
                             {{ form.file_fletes }}
                         </div>
