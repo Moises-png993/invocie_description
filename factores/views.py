@@ -7,10 +7,10 @@ from .models import Flete, Unidades, CostoPais
 import openpyxl
 from django.http import HttpResponse
 from datetime import datetime
-from jwt_utils import require_jwt
+
 # --- Utilidades generales ---
 
-@require_jwt
+
 def read_excel_file(file, name):
     """Lee un archivo Excel y devuelve un DataFrame validado."""
     if not file.name.lower().endswith('.xlsx'):
@@ -20,7 +20,7 @@ def read_excel_file(file, name):
         raise ValueError(f"El archivo {name} está vacío.")
     return df
 
-@require_jwt
+
 def html_table(df):
     """Convierte un DataFrame en tabla HTML Bootstrap."""
     return df.to_html(
@@ -31,7 +31,7 @@ def html_table(df):
 
 
 # --- Procesadores de datos ---
-@require_jwt
+
 def save_fletes(df):
     """Crea o actualiza registros de Flete a partir del DataFrame."""
     created, updated = 0, 0
@@ -64,7 +64,7 @@ def save_fletes(df):
 
     return created, updated
 
-@require_jwt
+
 def save_unidades(df):
     """Crea o actualiza registros de Unidades."""
     created, updated = 0, 0
@@ -103,7 +103,7 @@ def save_unidades(df):
                 updated += 1
 
     return created, updated
-@require_jwt
+
 def get_costos_paises():
     """Devuelve un diccionario con los costos por país."""
     costos = {}
@@ -119,7 +119,7 @@ def get_costos_paises():
         }
     return costos
 
-@require_jwt
+
 def calcular_resultado(df_fob):
     """Realiza el cálculo completo de la tabla resultado."""
     df_fob.columns = [col.strip().upper() for col in df_fob.columns]
@@ -248,7 +248,7 @@ def calcular_resultado(df_fob):
     return pd.DataFrame(resultados) if resultados else None
 
 # --- Vista optimizada ---
-@require_jwt
+
 def upload_excel_view(request):
     tablas, errores = {}, []
     stats = {"fletes_created": 0, "fletes_updated": 0, "cant_created": 0, "cant_updated": 0}
@@ -299,7 +299,7 @@ def upload_excel_view(request):
         **stats,
         "errores": errores,
     })
-@require_jwt
+
 def descargar_excel_resultados(request):
     resultados = request.session.get('resultados')
 
