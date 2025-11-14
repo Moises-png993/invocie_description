@@ -13,4 +13,4 @@ class Origen(models.Model):
     origen = models.TextField()
 
     def __str__(self):
-        return f"{self.codigo} - {self.descripcion}"
+        return f"{self.codigo} - {self.origen}"
