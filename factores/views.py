@@ -7,6 +7,7 @@ from .models import Flete, Unidades, CostoPais
 import openpyxl
 from django.http import HttpResponse
 from datetime import datetime
+from jwt_utils import require_jwt
 
 # --- Utilidades generales ---
 
@@ -249,6 +250,7 @@ def calcular_resultado(df_fob):
 
 # --- Vista optimizada ---
 
+@require_jwt
 def upload_excel_view(request):
     tablas, errores = {}, []
     stats = {"fletes_created": 0, "fletes_updated": 0, "cant_created": 0, "cant_updated": 0}
@@ -300,6 +302,7 @@ def upload_excel_view(request):
         "errores": errores,
     })
 
+@require_jwt
 def descargar_excel_resultados(request):
     resultados = request.session.get('resultados')
 
