@@ -2,7 +2,7 @@ from django.contrib import admin
 from import_export.admin import ImportExportModelAdmin
 from .models import Articulo, Origen
 from simpex.models import Contenedor
-from factores.models import Flete, Unidades
+from factores.models import Flete, Unidades, CostoPais
 
 admin.site.site_header = "Impex Administration"  
 admin.site.site_title = "Impex Admin Portal"      
@@ -44,3 +44,18 @@ class ContenedorAdmin(ImportExportModelAdmin):
     )
     list_filter = ('grupo_articulo', 'unidades_contenedor', 'unidades_cbm')
     search_fields = ('grupo_articulo', 'unidades_contenedor', 'unidades_cbm')
+
+@admin.register(CostoPais)
+class CostoPaisAdmin(ImportExportModelAdmin):
+    list_display = (
+        'pais',
+        'almacenaje',
+        'honorarios_aduanales',
+        'inspeccion_no_intrusiva',
+        'custodio',
+        'otros_gastos',
+        'flete_terrestre_ca',
+        'flete_local',
+    )
+    list_filter = ('pais',)
+    search_fields = ('pais',)

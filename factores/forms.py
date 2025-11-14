@@ -1,4 +1,11 @@
 from django import forms
 
-class ExcelUploadForm(forms.Form):
-    file = forms.FileField(label='Subir archivo Excel (.xlsx)')
+class UploadExcelForm(forms.Form):
+    # Archivo principal FOB (opcional)
+    file_fob = forms.FileField(label="Archivo Excel - FOB", required=False)
+    # Archivo con fletes (opcional)
+    file_fletes = forms.FileField(label="Archivo Excel - Fletes", required=False)
+    # Archivo con cantidades (opcional)
+    file_cantidades = forms.FileField(label="Archivo Excel - Cantidades", required=False)
+
+

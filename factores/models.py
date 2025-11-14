@@ -2,22 +2,7 @@ from django.db import models
 from django.db.models import F
 from django.db.models.functions import Round
 
-# ---------------------------
-#  MODELO DE FLETE
-# ---------------------------
 
-class FleteQuerySet(models.QuerySet):
-    def with_costos(self, unidades_contenedor):
-        """
-        Agrega columnas calculadas al queryset para cada tipo de flete.
-        Se puede usar así:
-        Flete.objects.with_costos(1000)
-        """
-        return self.annotate(
-            costo_unitario_ipl=Round(F('flete_ipl') / unidades_contenedor, 2),
-            costo_unitario_blue=Round(F('flete_blue') / unidades_contenedor, 2),
-            costo_unitario_directo=Round(F('flete_directo') / unidades_contenedor, 2),
-        )
 # ---------------------------
 #  MODELO DE UNIDADES
 # ---------------------------
@@ -36,33 +21,28 @@ class Flete(models.Model):
     flete_blue = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     flete_directo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
-    # Activamos el QuerySet personalizado
-    objects = FleteQuerySet.as_manager()
 
+class CostoPais(models.Model):
+    PAISES = [
+        ('SV', 'El Salvador'),
+        ('GT', 'Guatemala'),
+        ('HN', 'Honduras'),
+        ('CR', 'Costa Rica'),
+        ('PA', 'Panamá'),
+        ('NI', 'Nicaragua'),
+    ]
+
+    pais = models.CharField(max_length=2, choices=PAISES, unique=True)
+
+    almacenaje = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    honorarios_aduanales = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    inspeccion_no_intrusiva = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    custodio = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    otros_gastos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    flete_terrestre_ca = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    flete_local = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     def __str__(self):
-        return self.pais
-
-    # ---------------------------
-    #  MÉTODOS DE CÁLCULO
-    # ---------------------------
-
-    def costo_unitario_ipl(self, unidades_contenedor):
-        """Devuelve el costo por unidad para flete_ipl."""
-        if unidades_contenedor:
-            return round(float(self.flete_ipl or 0) / unidades_contenedor, 2)
-        return None
-
-    def costo_unitario_blue(self, unidades_contenedor):
-        """Devuelve el costo por unidad para flete_blue."""
-        if unidades_contenedor:
-            return round(float(self.flete_blue or 0) / unidades_contenedor, 2)
-        return None
-
-    def costo_unitario_directo(self, unidades_contenedor):
-        """Devuelve el costo por unidad para flete_directo."""
-        if unidades_contenedor:
-            return round(float(self.flete_directo or 0) / unidades_contenedor, 2)
-        return None
+        return dict(self.PAISES).get(self.pais, self.pais)
 
 
 

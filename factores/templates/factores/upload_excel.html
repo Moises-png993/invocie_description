@@ -3,28 +3,582 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Subir archivo Excel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Factores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #faf8f3 0%, #f3ede1 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            padding: 0.75rem 1.5rem;
+        }
+
+        .navbar-brand {
+            color: #ffd700 !important;
+            font-weight: 700;
+            font-size: 1.35rem;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar .btn-light {
+            background: #ffd700;
+            color: #1a1a1a;
+            font-weight: 600;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .navbar .btn-light:hover {
+            background: #ffed4e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .main-container {
+            max-width: 1200px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .card-container {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #ffd700;
+        }
+
+        h2 {
+            color: #1a1a1a;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        h4 {
+            color: #333333;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.15rem;
+        }
+
+        h5 {
+            color: #1a1a1a;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* UPLOAD SECTIONS */
+        .upload-section {
+            border-radius: 0.75rem;
+            padding: 1.2rem;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px dashed rgba(255,255,255,0.3);
+            margin-bottom: 1rem;
+        }
+
+        .upload-section:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-section i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .upload-label {
+            font-weight: 600;
+            font-size: 1rem;
+            display: block;
+        }
+
+        /* Gradientes en escala amarillo y negro */
+        .section-fob { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #1a1a1a; }
+        .section-fletes { background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%); color: #1a1a1a; }
+        .section-cantidades { background: linear-gradient(135deg, #2d2d2d 0%, #404040 100%); color: #ffd700; }
+
+        /* BOTONES */
+        .btn-primary {
+            background-color: #1a1a1a !important;
+            border-color: #1a1a1a !important;
+            color: #ffd700 !important;
+            font-weight: 600;
+            padding: 0.65rem 1.5rem;
+            border-radius: 0.6rem;
+            font-size: 0.95rem;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background-color: #ffd700 !important;
+            border-color: #ffd700 !important;
+            color: #1a1a1a !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-success {
+            background-color: #2d5016 !important;
+            border-color: #2d5016 !important;
+            font-weight: 600;
+            padding: 0.65rem 1.5rem;
+            border-radius: 0.6rem;
+            font-size: 0.95rem;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background-color: #3a6b1f !important;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(45, 80, 22, 0.3);
+        }
+
+        /* TARJETAS RESUMEN */
+        .summary-card {
+            background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+            border: 2px solid #d4af37;
+            border-radius: 0.75rem;
+            padding: 1.2rem;
+            text-align: center;
+            transition: all 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .summary-card h6 {
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .summary-card p {
+            color: #333333;
+            font-size: 0.9rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* FORMULARIO PAÍSES */
+        .countries-card {
+            background: linear-gradient(135deg, #f3ede1 0%, #faf8f3 100%);
+            border: 2px solid #d4af37;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .countries-card .btn-outline-primary {
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            color: #1a1a1a;
+            border-color: #d4af37;
+            background: white;
+        }
+
+        .countries-card .btn-outline-primary:hover,
+        .countries-card .form-check-input:checked + .btn-outline-primary {
+            background: #ffd700;
+            color: #1a1a1a;
+            border-color: #ffd700;
+        }
+
+        .form-check-input {
+            display: none;
+        }
+
+        /* ALERTAS */
+        .alert {
+            border-radius: 0.75rem;
+            border: none;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* TABLAS MEJORADAS */
+        .table-wrapper {
+            background: white;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .table-responsive {
+            max-height: 600px;
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        /* Headers de tabla con gradiente amarillo y negro */
+      table th {
+        background: linear-gradient(135deg, #fff8dc 0%, #ffe680 100%);
+        color: #222222; /* texto negro grisáceo para suavizar */
+        font-weight: 700;
+        padding: 0.85rem;
+        text-align: center;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 2px solid #e0b000; /* línea más oscura para contraste */
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    }
+
+        table td {
+            padding: 0.75rem 0.85rem;
+            text-align: center;
+            white-space: nowrap;
+            border-bottom: 1px solid #f3ede1;
+            color: #ffffff;
+            /* Cambié el color del texto a blanco para mejor contraste */
+        }
+
+        table tbody tr {
+            background-color: #2d2d2d;
+        }
+
+        table tbody tr td {
+            color: #ffffff;
+        }
+
+        table tbody tr:hover {
+            background-color: #3a3a3a;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .card-container {
+                padding: 1.25rem;
+            }
+
+            h2 {
+                font-size: 1.35rem;
+            }
+
+            .upload-section {
+                padding: 0.9rem;
+            }
+
+            .upload-section i {
+                font-size: 1.5rem;
+            }
+
+            .upload-label {
+                font-size: 0.9rem;
+            }
+
+            table th, table td {
+                padding: 0.6rem 0.5rem;
+                font-size: 0.75rem;
+            }
+
+            .btn-primary, .btn-success {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+
+            .summary-card {
+                padding: 0.9rem;
+            }
+
+            .countries-card .btn-outline-primary {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 0;
+            }
+
+            .main-container {
+                margin: 0.75rem auto;
+                padding: 0 0.75rem;
+            }
+
+            .card-container {
+                padding: 1rem;
+                margin-bottom: 1rem;
+                border-radius: 0.75rem;
+            }
+
+            .navbar {
+                padding: 0.5rem 1rem;
+            }
+
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+
+            h2 {
+                font-size: 1.1rem;
+                margin-bottom: 1rem;
+            }
+
+            .table-responsive {
+                max-height: 400px;
+            }
+
+            table th, table td {
+                padding: 0.5rem 0.4rem;
+                font-size: 0.7rem;
+            }
+
+            .d-flex.flex-wrap {
+                gap: 0.5rem !important;
+            }
+
+            .countries-card .btn-outline-primary {
+                padding: 0.35rem 0.6rem;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
 </head>
-<body class="p-4">
-    <div class="container">
-        <h2 class="mb-4">📦 Cargar archivo Excel con datos de FOB</h2>
 
-        <form method="POST" enctype="multipart/form-data" class="mb-4">
-            {% csrf_token %}
-            <div class="mb-3">
-                {{ form.file.label_tag }}
-                {{ form.file }}
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg px-3">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="bi bi-calculator"></i> Gestión de Factores
+            </span>
+            <button class="btn btn-light ms-auto" data-bs-toggle="modal" data-bs-target="#mantenimientoModal">
+                <i class="bi bi-upload"></i> Actualizar Datos
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR PRINCIPAL -->
+    <div class="main-container">
+
+        <!-- RESUMEN -->
+        {% if fletes_created or fletes_updated or cant_created or cant_updated %}
+        <div class="card-container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="summary-card">
+                        <h6><i class="bi bi-truck"></i> Fletes Agregados</h6>
+                        <p><strong>{{ fletes_created }}</strong> creados<br><strong>{{ fletes_updated }}</strong> actualizados</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="summary-card">
+                        <h6><i class="bi bi-box"></i> Cantidades Agregadas</h6>
+                        <p><strong>{{ cant_created }}</strong> creadas<br><strong>{{ cant_updated }}</strong> actualizadas</p>
+                    </div>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Procesar</button>
-        </form>
+        </div>
+        {% endif %}
 
-        {% if tabla %}
-            <h4>Resultados:</h4>
-            <div class="table-responsive">
-                {{ tabla|safe }}
+        <!-- ERRORES -->
+        {% if errores %}
+            <div class="card-container">
+                <div class="alert alert-danger">
+                    <strong><i class="bi bi-exclamation-circle"></i> Errores detectados:</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for e in errores %}
+                            <li>{{ e }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
         {% endif %}
+
+        <!-- SECCIÓN PROCESAR FACTORES -->
+        <div class="card-container">
+            <h2><i class="bi bi-calculator-lg"></i> Procesar Factores</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="upload-section section-cantidades mb-2">
+                    <label class="upload-label" for="id_file_fob">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                        Selecciona archivo Excel con Factores
+                    </label>
+                    {{ form.file_fob }}
+                </div>
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-play-circle"></i> Procesar Datos
+                </button>
+            </form>
+        </div>
+
+        <!-- SELECCIÓN DE PAÍSES -->
+        <div class="card-container">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="countries-card">
+                    <h5><i class="bi bi-geo-alt"></i> Filtrar por País</h5>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="paises" id="pais_sv" value="El Salvador">
+                            <label class="btn btn-outline-primary btn-sm" for="pais_sv">El Salvador</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="paises" id="pais_gt" value="Guatemala">
+                            <label class="btn btn-outline-primary btn-sm" for="pais_gt">Guatemala</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="paises" id="pais_hn" value="Honduras">
+                            <label class="btn btn-outline-primary btn-sm" for="pais_hn">Honduras</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="paises" id="pais_cr" value="Costa Rica">
+                            <label class="btn btn-outline-primary btn-sm" for="pais_cr">Costa Rica</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="paises" id="pais_ni" value="Nicaragua">
+                            <label class="btn btn-outline-primary btn-sm" for="pais_ni">Nicaragua</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="paises" id="pais_pa" value="Panamá">
+                            <label class="btn btn-outline-primary btn-sm" for="pais_pa">Panamá</label>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-center mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel"></i> Aplicar Filtros
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- RESULTADOS -->
+        {% if tabla_resultado %}
+            <div class="card-container">
+                <h4><i class="bi bi-table"></i> Costo Estándar</h4>
+                <div class="text-end mb-3">
+                    <a href="{% url 'descargar_excel' %}" class="btn btn-success">
+                        <i class="bi bi-download"></i> Descargar Excel
+                    </a>
+                </div>
+                <div class="table-wrapper">
+                    <div class="table-responsive">{{ tabla_resultado|safe }}</div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- TABLA FLETES -->
+        {% if tabla_fletes %}
+            <div class="card-container">
+                <h4><i class="bi bi-truck"></i> Datos Fletes</h4>
+                <div class="table-wrapper">
+                    <div class="table-responsive">{{ tabla_fletes|safe }}</div>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- TABLA CANTIDADES -->
+        {% if tabla_cantidades %}
+            <div class="card-container">
+                <h4><i class="bi bi-box"></i> Datos Cantidades</h4>
+                <div class="table-wrapper">
+                    <div class="table-responsive">{{ tabla_cantidades|safe }}</div>
+                </div>
+            </div>
+        {% endif %}
+
     </div>
+
+    <!-- MODAL MANTENIMIENTO -->
+    <div class="modal fade" id="mantenimientoModal" tabindex="-1" aria-labelledby="mantenimientoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="mantenimientoModalLabel">
+                        <i class="bi bi-gear"></i> Actualizar Tablas
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form method="POST" enctype="multipart/form-data" id="mantenimientoForm">
+                        {% csrf_token %}
+                        
+                        <div class="upload-section section-fob mb-3">
+                            <label class="upload-label" for="id_file_cantidades">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                                Cantidades por Artículo
+                            </label>
+                            {{ form.file_cantidades }}
+                        </div>
+
+                        <div class="upload-section section-fletes mb-3">
+                            <label class="upload-label" for="id_file_fletes">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                                Flete por Ruta
+                            </label>
+                            {{ form.file_fletes }}
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" form="mantenimientoForm" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

@@ -1,53 +1,327 @@
 import pandas as pd
+from decimal import Decimal
+from django.db import transaction
 from django.shortcuts import render
-from .forms import ExcelUploadForm
-from .models import Flete, Unidades
+from .forms import UploadExcelForm
+from .models import Flete, Unidades, CostoPais
+import openpyxl
+from django.http import HttpResponse
+from datetime import datetime
+# --- Utilidades generales ---
 
-def upload_excel(request):
-    df_resultado = None
+def read_excel_file(file, name):
+    """Lee un archivo Excel y devuelve un DataFrame validado."""
+    if not file.name.lower().endswith('.xlsx'):
+        raise ValueError(f"El archivo {name} debe tener extensión .xlsx")
+    df = pd.read_excel(file)
+    if df.empty:
+        raise ValueError(f"El archivo {name} está vacío.")
+    return df
 
-    if request.method == 'POST':
-        form = ExcelUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            excel_file = form.cleaned_data['file']
 
-            # Leer el Excel con pandas
-            df = pd.read_excel(excel_file)
+def html_table(df):
+    """Convierte un DataFrame en tabla HTML Bootstrap."""
+    return df.to_html(
+        index=False,
+        classes="table table-bordered table-striped table-hover align-middle text-center",
+        na_rep=""
+    )
 
-            # Normalizar columnas
-            df.columns = [col.strip().upper() for col in df.columns]
 
-            # Procesar: traer flete desde BD según país
-            resultados = []
-            for _, row in df.iterrows():
-                pais = row.get('PAIS ORIGEN')
-                grupo = row.get('GRUPO ARTICULOS')
-                fob = row.get('FOB')
+# --- Procesadores de datos ---
 
+def save_fletes(df):
+    """Crea o actualiza registros de Flete a partir del DataFrame."""
+    created, updated = 0, 0
+    records = df.to_dict(orient='records')
+
+    with transaction.atomic():
+        for rec in records:
+            pais = rec.get('pais') or rec.get('Pais') or rec.get('PAIS')
+            if not pais:
+                continue
+
+            def _val(k):
+                v = rec.get(k)
+                return Decimal(str(v)) if pd.notna(v) and v != '' else None
+
+            defaults = {
+                'flete_ipl': _val('flete_ipl') or _val('Flete_IPL'),
+                'flete_blue': _val('flete_blue') or _val('Flete_Blue'),
+                'flete_directo': _val('flete_directo') or _val('Flete_Directo'),
+            }
+
+            obj, is_created = Flete.objects.update_or_create(
+                pais=str(pais).strip(),
+                defaults=defaults
+            )
+            if is_created:
+                created += 1
+            else:
+                updated += 1
+
+    return created, updated
+
+
+def save_unidades(df):
+    """Crea o actualiza registros de Unidades."""
+    created, updated = 0, 0
+    records = df.to_dict(orient='records')
+
+    with transaction.atomic():
+        for rec in records:
+            grupo = rec.get('grupo_articulo') or rec.get('grupo') or rec.get('Grupo_Articulo')
+            if not grupo:
+                continue
+
+            def _int_val(k):
+                v = rec.get(k)
+                if pd.isna(v) or v == '':
+                    return None
                 try:
-                    flete = Flete.objects.get(pais__iexact=pais)
-                    unidades = Unidades.objects.get(grupo_articulo__iexact=grupo)
-                    costo_unitario = round(float(flete.flete_ipl or 0) / unidades.unidades_contenedor, 2)
-                    costo_total = round(costo_unitario + float(fob or 0), 2)
-                except (Flete.DoesNotExist, Unidades.DoesNotExist):
-                    costo_unitario = None
-                    costo_total = None
+                    return int(v)
+                except Exception:
+                    try:
+                        return int(float(v))
+                    except Exception:
+                        return None
 
-                resultados.append({
-                    'PAIS ORIGEN': pais,
-                    'GRUPO ARTICULOS': grupo,
-                    'FOB': fob,
-                    'FLETE IPL': flete.flete_ipl if 'flete' in locals() else None,
-                    'COSTO UNITARIO': costo_unitario,
-                    'COSTO TOTAL': costo_total,
-                })
+            defaults = {
+                'unidades_contenedor': _int_val('unidades_contenedor') or _int_val('Unidades_Contenedor') or 0,
+                'unidades_cbm': _int_val('unidades_cbm') or _int_val('Unidades_CBM') or 0,
+            }
 
-            df_resultado = pd.DataFrame(resultados)
+            obj, is_created = Unidades.objects.update_or_create(
+                grupo_articulo=str(grupo).strip(),
+                defaults=defaults
+            )
+            if is_created:
+                created += 1
+            else:
+                updated += 1
+
+    return created, updated
+
+def get_costos_paises():
+    """Devuelve un diccionario con los costos por país."""
+    costos = {}
+    for c in CostoPais.objects.all():
+        costos[c.pais.upper()] = {
+            'almacenaje': float(c.almacenaje or 0),
+            'honorarios_aduanales': float(c.honorarios_aduanales or 0),
+            'inspeccion_intrusiva': float(c.inspeccion_no_intrusiva or 0),
+            'custodio': float(c.custodio or 0),
+            'otros_gastos': float(c.otros_gastos or 0),
+            'flete_terrestre_ca': float(c.flete_terrestre_ca or 0),
+            'flete_local': float(c.flete_local or 0),
+        }
+    return costos
+
+
+def calcular_resultado(df_fob):
+    """Realiza el cálculo completo de la tabla resultado."""
+    df_fob.columns = [col.strip().upper() for col in df_fob.columns]
+    resultados = []
+
+    # ⚡️ Cargar todos los costos una sola vez
+    costos_paises = get_costos_paises()
+
+    for _, row in df_fob.iterrows():
+        try:
+            pais = row.get('PAIS ORIGEN')
+            grupo = row.get('GRUPO ARTICULOS')
+            fob_val = float(row.get('FOB') or 0)
+            precio_venta = float(row.get('PRECIO DE VENTA') or 0)
+            flete = Flete.objects.get(pais__iexact=pais)
+            unidades = Unidades.objects.get(grupo_articulo__iexact=grupo)
+
+            flete_unitario = round(float(flete.flete_ipl or 0) / unidades.unidades_contenedor, 5)
+            almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 60, 5)
+            seguro = round((fob_val + flete_unitario) * 0.002442, 5)
+
+            cfs = round(739 / unidades.unidades_contenedor, 5) if flete.pais.lower() == 'china' else 0
+            transporte_local = round(250 / unidades.unidades_contenedor, 5)
+            thc = round(450 / unidades.unidades_contenedor, 5)
+            cl_asia = round(145 / unidades.unidades_contenedor, 5)
+            honorarios = round(90 / unidades.unidades_contenedor, 5)
+
+            if unidades.grupo_articulo[3] == "C":
+                recepcion = round(0.35 / 10, 5)
+                despacho = 0.25 / 10
+            else:
+                recepcion = 0.14
+                despacho = 0.10
+
+            if unidades.grupo_articulo[:3] == "DSM" or  unidades.grupo_articulo[:3] == "DSP" or  unidades.grupo_articulo[:3] == "DIS":
+                royalty = (precio_venta * 0.85) * 0.10
+            elif unidades.grupo_articulo[:3] == "HPU":
+                royalty = (precio_venta * 0.65) * 0.06
+            else:
+                royalty = 0
+            comision_cat = fob_val * 0.2275 if unidades.grupo_articulo[:4] == "CATC" else 0
+
+            costo_ait = fob_val + flete_unitario + cfs + thc + cl_asia + honorarios + transporte_local + almacenaje + seguro + recepcion + despacho + comision_cat + royalty
+            comision_ait = round(costo_ait * 0.12, 5)
+            fob_ait = costo_ait + comision_ait
+
+            # =====================
+            # Calculo por país genérico
+            # =====================
+            resultados_pais = {}
+
+            for codigo_pais in ['SV', 'GT', 'HN', 'CR', 'PA', 'NI']:
+                costo = costos_paises.get(codigo_pais, {})
+                
+                almacenaje_local = costo.get('almacenaje', 0) / (unidades.unidades_contenedor * 1.54)
+
+                honorarios_aduanales = costo.get('honorarios_aduanales', 0) / (unidades.unidades_contenedor * 1.54)
+                flete_local = costo.get('flete_local', 0) / (unidades.unidades_contenedor * 1.54)
+                inspection_no_intrusiva = costo.get('inspeccion_intrusiva', 0) / (unidades.unidades_contenedor * 1.54)
+                custodio_ca = costo.get('custodio', 0) / (unidades.unidades_contenedor * 1.54)
+                flete_terrestre_ca = costo.get('flete_terrestre_ca', 0) / (unidades.unidades_contenedor * 1.54)
+                otros_gastos = costo.get('otros_gastos', 0) / (unidades.unidades_contenedor * 1.54)
+
+                seguro_pais = (fob_ait + flete_local) * 0.002442
+                if flete.pais.lower() in ('méxico', 'guatemala', 'el salvador', 'alemania', 'nicaragua'):
+                    dai_pais = 0
+                else:
+                    dai_pais = (fob_ait + flete_local + seguro_pais) * 0.15
+                landed = fob_ait + honorarios_aduanales + flete_local + seguro_pais + dai_pais + inspection_no_intrusiva + almacenaje_local + custodio_ca + flete_terrestre_ca + otros_gastos
+                factor = round(landed / fob_val, 2)
+
+                resultados_pais[codigo_pais] = {
+                    'HONORARIOS': honorarios_aduanales,
+                    'FLETE': flete_local,
+                    'SEGURO': seguro_pais,
+                    'DAI': dai_pais,
+                    'LANDED': landed,
+                    'FACTOR': factor,
+                    'ALMACENAJE': almacenaje_local,
+                    'INSPECCION': inspection_no_intrusiva,
+                    'CUSTODIO_CA': custodio_ca,
+                    'FLETE_TERRESTRE': flete_terrestre_ca,
+                    'OTROS_GASTOS': otros_gastos
+                }
+
+            resultados.append({
+                'PAIS ORIGEN': pais,
+                'GRUPO ARTICULOS': grupo,
+                'PRECIO DE VENTA': precio_venta,
+                'FOB': fob_val,
+                'COMISION CAT': comision_cat,
+                'ROYALTY': royalty,
+                'CFS': cfs,
+                'FLETE INTERNACIONAL': flete_unitario,
+                'THC': thc,
+                'CL ASIA': cl_asia,
+                'HONORARIOS': honorarios,
+                'TRANSPORTE LOCAL': transporte_local,
+                'RECEPCION': recepcion,
+                'DESPACHO': despacho,
+                'ALMACENAJE': almacenaje,
+                'SEGURO': seguro,
+                'COSTO AIT': costo_ait,
+                'COMISION AIT': comision_ait,
+                'FOB AIT': fob_ait,
+
+                # Cargar dinámicamente los resultados por país
+                **{f'ALMACENAJE CA {p}': resultados_pais[p]['ALMACENAJE'] for p in resultados_pais},
+                **{f'HONORARIOS {p}': resultados_pais[p]['HONORARIOS'] for p in resultados_pais},
+                **{f'XRAY {p}': resultados_pais[p]['INSPECCION'] for p in resultados_pais},
+                **{f'CUSTODIO {p}': resultados_pais[p]['CUSTODIO_CA'] for p in resultados_pais},
+                **{f'FLETE LOCAL PAIS {p}': resultados_pais[p]['FLETE'] for p in resultados_pais},
+                **{f'FLETE TERRESTRE {p}': resultados_pais[p]['FLETE_TERRESTRE'] for p in resultados_pais},
+                **{f'OTROS GASTOS {p}': resultados_pais[p]['OTROS_GASTOS'] for p in resultados_pais},
+                **{f'SEGURO {p}': resultados_pais[p]['SEGURO'] for p in resultados_pais},
+                **{f'DAI {p}': resultados_pais[p]['DAI'] for p in resultados_pais},
+                **{f'LANDED {p}': resultados_pais[p]['LANDED'] for p in resultados_pais},
+                **{f'FACTOR {p}': resultados_pais[p]['FACTOR'] for p in resultados_pais},
+                
+            })
+
+        except Exception as e:
+            print("Error:", e)
+            continue
+
+    return pd.DataFrame(resultados) if resultados else None
+
+# --- Vista optimizada ---
+
+def upload_excel_view(request):
+    tablas, errores = {}, []
+    stats = {"fletes_created": 0, "fletes_updated": 0, "cant_created": 0, "cant_updated": 0}
+
+    if request.method == "POST":
+        form = UploadExcelForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                # Procesar FOB
+                fob_file = form.cleaned_data.get('file_fob')
+                if fob_file:
+                    df_fob = read_excel_file(fob_file, "FOB")
+                    tablas["tabla_fob"] = html_table(df_fob)
+
+                # Procesar Fletes
+                fletes_file = form.cleaned_data.get('file_fletes')
+                if fletes_file:
+                    df_fletes = read_excel_file(fletes_file, "Fletes")
+                    tablas["tabla_fletes"] = html_table(df_fletes)
+                    c, u = save_fletes(df_fletes)
+                    stats["fletes_created"], stats["fletes_updated"] = c, u
+
+                # Procesar Cantidades
+                cant_file = form.cleaned_data.get('file_cantidades')
+                if cant_file:
+                    df_cant = read_excel_file(cant_file, "Cantidades")
+                    tablas["tabla_cantidades"] = html_table(df_cant)
+                    c, u = save_unidades(df_cant)
+                    stats["cant_created"], stats["cant_updated"] = c, u
+
+                # Calcular tabla resultado
+                if fob_file:
+                    df_result = calcular_resultado(df_fob)
+                    if df_result is not None:
+                        tablas["tabla_resultado"] = html_table(df_result)
+                        # Guardar resultados en sesión para permitir descarga
+                        request.session['resultados'] = df_result.to_dict(orient='records')
+
+
+            except Exception as e:
+                errores.append(str(e))
     else:
-        form = ExcelUploadForm()
+        form = UploadExcelForm()
 
-    return render(request, 'factores/upload_excel.html', {
-        'form': form,
-        'tabla': df_resultado.to_html(classes='table table-striped', index=False) if df_resultado is not None else None,
+    return render(request, "factores/upload_excel.html", {
+        "form": form,
+        **tablas,
+        **stats,
+        "errores": errores,
     })
 
+def descargar_excel_resultados(request):
+    resultados = request.session.get('resultados')
+
+    if not resultados:
+        return HttpResponse("No hay resultados disponibles para descargar.", status=400)
+
+    # Crear libro de Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"factores_{datetime.now().strftime('%Y%m%d')}"
+
+    # Encabezados
+    headers = list(resultados[0].keys())
+    ws.append(headers)
+
+    # Filas de datos
+    for fila in resultados:
+        ws.append(list(fila.values()))
+
+    # Crear respuesta HTTP
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="output.xlsx"'
+
+    wb.save(response)
+    return response
