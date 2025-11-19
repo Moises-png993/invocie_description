@@ -121,7 +121,7 @@ def get_costos_paises():
     return costos
 
 
-def calcular_resultado(df_fob):
+def calcular_resultado(df_fob, ruta='IPL'):
     """Realiza el cálculo completo de la tabla resultado."""
     df_fob.columns = [col.strip().upper() for col in df_fob.columns]
     resultados = []
@@ -133,12 +133,37 @@ def calcular_resultado(df_fob):
         try:
             pais = row.get('PAIS ORIGEN')
             grupo = row.get('GRUPO ARTICULOS')
+            
+            # Validar que existan los valores requeridos
+            if not pais or pd.isna(pais):
+                raise ValueError(f"Fila sin 'PAIS ORIGEN' definido. Verifica que todas las filas tengan un país de origen.")
+            if not grupo or pd.isna(grupo):
+                raise ValueError(f"Fila sin 'GRUPO ARTICULOS' definido en país {pais}. Verifica que todas las filas tengan un grupo de artículos.")
+            
             fob_val = float(row.get('FOB') or 0)
             precio_venta = float(row.get('PRECIO DE VENTA') or 0)
-            flete = Flete.objects.get(pais__iexact=pais)
-            unidades = Unidades.objects.get(grupo_articulo__iexact=grupo)
+            
+            # Buscar flete en la base de datos
+            try:
+                flete = Flete.objects.get(pais__iexact=pais)
+            except Flete.DoesNotExist:
+                raise ValueError(f"No se encontró información de flete para el país '{pais}'. Verifica que el país esté registrado en la base de datos.")
+            
+            # Buscar unidades en la base de datos
+            try:
+                unidades = Unidades.objects.get(grupo_articulo__iexact=grupo)
+            except Unidades.DoesNotExist:
+                raise ValueError(f"No se encontró información de unidades para el grupo de artículos '{grupo}'. Verifica que el grupo esté registrado en la base de datos.")
 
-            flete_unitario = round(float(flete.flete_ipl or 0) / unidades.unidades_contenedor, 5)
+            # Seleccionar flete según la ruta
+            if ruta == 'BLUE':
+                flete_valor = flete.flete_blue
+            elif ruta == 'DIRECTO':
+                flete_valor = flete.flete_directo
+            else:
+                flete_valor = flete.flete_ipl
+
+            flete_unitario = round(float(flete_valor or 0) / unidades.unidades_contenedor, 5)
             almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 60, 5)
             seguro = round((fob_val + flete_unitario) * 0.002442, 5)
 
@@ -190,7 +215,7 @@ def calcular_resultado(df_fob):
                 else:
                     dai_pais = (fob_ait + flete_local + seguro_pais) * 0.15
                 landed = fob_ait + honorarios_aduanales + flete_local + seguro_pais + dai_pais + inspection_no_intrusiva + almacenaje_local + custodio_ca + flete_terrestre_ca + otros_gastos
-                factor = round(landed / fob_val, 2)
+                factor = round(landed / fob_val, 5)
 
                 resultados_pais[codigo_pais] = {
                     'HONORARIOS': honorarios_aduanales,
@@ -242,6 +267,9 @@ def calcular_resultado(df_fob):
                 
             })
 
+        except ValueError as e:
+            # Re-lanzar errores de validación para que aparezcan en la interfaz
+            raise
         except Exception as e:
             print("Error:", e)
             continue
@@ -254,6 +282,16 @@ def calcular_resultado(df_fob):
 def upload_excel_view(request):
     tablas, errores = {}, []
     stats = {"fletes_created": 0, "fletes_updated": 0, "cant_created": 0, "cant_updated": 0}
+    
+    # Países disponibles para filtros
+    paises = [
+        {'codigo': 'SV', 'nombre': 'El Salvador'},
+        {'codigo': 'GT', 'nombre': 'Guatemala'},
+        {'codigo': 'HN', 'nombre': 'Honduras'},
+        {'codigo': 'NI', 'nombre': 'Nicaragua'},
+        {'codigo': 'CR', 'nombre': 'Costa Rica'},
+        {'codigo': 'PA', 'nombre': 'Panamá'},
+    ]
 
     if request.method == "POST":
         form = UploadExcelForm(request.POST, request.FILES)
@@ -261,6 +299,8 @@ def upload_excel_view(request):
             try:
                 # Procesar FOB
                 fob_file = form.cleaned_data.get('file_fob')
+                ruta = form.cleaned_data.get('ruta', 'IPL')
+                
                 if fob_file:
                     df_fob = read_excel_file(fob_file, "FOB")
                     tablas["tabla_fob"] = html_table(df_fob)
@@ -283,7 +323,7 @@ def upload_excel_view(request):
 
                 # Calcular tabla resultado
                 if fob_file:
-                    df_result = calcular_resultado(df_fob)
+                    df_result = calcular_resultado(df_fob, ruta=ruta)
                     if df_result is not None:
                         tablas["tabla_resultado"] = html_table(df_result)
                         # Guardar resultados en sesión para permitir descarga
@@ -297,6 +337,7 @@ def upload_excel_view(request):
 
     return render(request, "factores/upload_excel.html", {
         "form": form,
+        "paises": paises,
         **tablas,
         **stats,
         "errores": errores,
@@ -308,25 +349,59 @@ def descargar_excel_resultados(request):
 
     if not resultados:
         return HttpResponse("No hay resultados disponibles para descargar.", status=400)
+    # Obtener país(s) seleccionados (opcional) desde query params: puede ser 'SV' o 'SV,GT'
+    pais_param = (request.GET.get('pais') or '').strip()
+    selected_paises = [p.strip().upper() for p in pais_param.split(',') if p.strip()]
 
-    # Crear libro de Excel
+    # Construir workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = f"factores_{datetime.now().strftime('%Y%m%d')}"
 
-    # Encabezados
+    # Encabezados disponibles
     headers = list(resultados[0].keys())
-    ws.append(headers)
 
-    # Filas de datos
+    # Columnas base que siempre exportamos (mismo criterio que en template)
+    columnas_base = ['PAIS ORIGEN', 'GRUPO ARTICULOS', 'PRECIO DE VENTA', 'FOB', 'COMISION CAT', 'ROYALTY', 'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO', 'COSTO AIT', 'COMISION AIT', 'FOB AIT']
+
+    pais_keywords = ['ALMACENAJE', 'HONORARIOS', 'XRAY', 'CUSTODIO', 'FLETE LOCAL', 'FLETE LOCAL PAIS', 'FLETE TERRESTRE', 'OTROS GASTOS', 'SEGURO', 'DAI', 'LANDED', 'FACTOR']
+
+    # Si no se especifica país, exportar todo
+    if not selected_paises:
+        filtered_headers = headers
+    else:
+        filtered_headers = []
+        for h in headers:
+            h_up = (h or '').upper().strip()
+            # normalizar tokens
+            tokens = [t for t in __import__('re').sub('[^A-Z0-9]+', ' ', h_up).split() if t]
+
+            # incluir si es columna base
+            if any(b in h_up for b in columnas_base):
+                filtered_headers.append(h)
+                continue
+
+            # detectar keywords y código de país (cualquiera de los seleccionados)
+            tiene_keyword = any(k in h_up for k in pais_keywords)
+            contiene_pais = any((p in tokens) or ((' ' + p + ' ') in (' ' + h_up + ' ')) for p in selected_paises)
+            tiene_sufijo = any(suf in tokens for suf in ('ASI', 'ASIA', 'CA'))
+
+            if tiene_keyword and (contiene_pais or (tiene_sufijo and tokens and tokens[-1] in selected_paises)):
+                filtered_headers.append(h)
+
+    # Añadir encabezados al worksheet
+    ws.append(filtered_headers)
+
+    # Filas filtradas: mantener solo las claves que están en filtered_headers (mismo orden)
     for fila in resultados:
-        ws.append(list(fila.values()))
+        row = [fila.get(h) for h in filtered_headers]
+        ws.append(row)
 
     # Crear respuesta HTTP
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename="output.xlsx"'
+    response['Content-Disposition'] = f'attachment; filename="factores_{datetime.now().strftime("%Y%m%d")}.xlsx"'
 
     wb.save(response)
     return response
