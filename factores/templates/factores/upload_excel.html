@@ -1,6 +1,7 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,14 +99,14 @@
             text-align: center;
             cursor: pointer;
             transition: all 0.3s;
-            border: 2px dashed rgba(255,255,255,0.3);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
             margin-bottom: 1rem;
         }
 
         .upload-section:hover {
             transform: translateY(-2px);
-            border-color: rgba(255,255,255,0.6);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
 
         .upload-section input[type="file"] {
@@ -125,9 +126,20 @@
         }
 
         /* Gradientes en escala amarillo y negro */
-        .section-fob { background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); color: #1a1a1a; }
-        .section-fletes { background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%); color: #1a1a1a; }
-        .section-cantidades { background: linear-gradient(135deg, #2d2d2d 0%, #404040 100%); color: #ffd700; }
+        .section-fob {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #1a1a1a;
+        }
+
+        .section-fletes {
+            background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%);
+            color: #1a1a1a;
+        }
+
+        .section-cantidades {
+            background: linear-gradient(135deg, #2d2d2d 0%, #404040 100%);
+            color: #ffd700;
+        }
 
         /* BOTONES */
         .btn-primary {
@@ -205,22 +217,29 @@
             margin-bottom: 1.5rem;
         }
 
-        .countries-card .btn-outline-primary {
+        .countries-card .radio-btn {
             border-radius: 0.5rem;
             font-weight: 500;
             font-size: 0.9rem;
             transition: all 0.3s;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1.2rem;
             color: #1a1a1a;
-            border-color: #d4af37;
+            border: 2px solid #d4af37;
             background: white;
+            cursor: pointer;
+            display: inline-block;
         }
 
-        .countries-card .btn-outline-primary:hover,
-        .countries-card .form-check-input:checked + .btn-outline-primary {
+        .countries-card .radio-btn:hover {
+            border-color: #ffd700;
+            background: #ffed4e;
+        }
+
+        .countries-card .radio-btn.active {
             background: #ffd700;
             color: #1a1a1a;
             border-color: #ffd700;
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
         }
 
         .form-check-input {
@@ -263,19 +282,21 @@
         }
 
         /* Headers de tabla con gradiente amarillo y negro */
-      table th {
-        background: linear-gradient(135deg, #fff8dc 0%, #ffe680 100%);
-        color: #222222; /* texto negro grisáceo para suavizar */
-        font-weight: 700;
-        padding: 0.85rem;
-        text-align: center;
-        white-space: nowrap;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        border-bottom: 2px solid #e0b000; /* línea más oscura para contraste */
-        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
-    }
+        table th {
+            background: linear-gradient(135deg, #fff8dc 0%, #ffe680 100%);
+            color: #222222;
+            /* texto negro grisáceo para suavizar */
+            font-weight: 700;
+            padding: 0.85rem;
+            text-align: center;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #e0b000;
+            /* línea más oscura para contraste */
+            box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+        }
 
         table td {
             padding: 0.75rem 0.85rem;
@@ -320,12 +341,14 @@
                 font-size: 0.9rem;
             }
 
-            table th, table td {
+            table th,
+            table td {
                 padding: 0.6rem 0.5rem;
                 font-size: 0.75rem;
             }
 
-            .btn-primary, .btn-success {
+            .btn-primary,
+            .btn-success {
                 padding: 0.5rem 1rem;
                 font-size: 0.85rem;
             }
@@ -373,7 +396,8 @@
                 max-height: 400px;
             }
 
-            table th, table td {
+            table th,
+            table td {
                 padding: 0.5rem 0.4rem;
                 font-size: 0.7rem;
             }
@@ -397,10 +421,10 @@
             <span class="navbar-brand">
                 <i class="bi bi-calculator"></i>Estimación de Costo Estándar
             </span>
-             <!-- Botón para ir al HOME -->
-        <a href="/app/home/" class="btn btn-primary ms-3">
-            <i class="bi bi-house-door"></i> Home
-        </a>
+            <!-- Botón para ir al HOME -->
+            <a href="/app/home/" class="btn btn-primary ms-3">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <button class="btn btn-light ms-auto" data-bs-toggle="modal" data-bs-target="#mantenimientoModal">
                 <i class="bi bi-upload"></i> Actualizar Datos
             </button>
@@ -417,13 +441,15 @@
                 <div class="col-md-6">
                     <div class="summary-card">
                         <h6><i class="bi bi-truck"></i> Fletes Agregados</h6>
-                        <p><strong>{{ fletes_created }}</strong> creados<br><strong>{{ fletes_updated }}</strong> actualizados</p>
+                        <p><strong>{{ fletes_created }}</strong> creados<br><strong>{{ fletes_updated }}</strong>
+                            actualizados</p>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="summary-card">
                         <h6><i class="bi bi-box"></i> Cantidades Agregadas</h6>
-                        <p><strong>{{ cant_created }}</strong> creadas<br><strong>{{ cant_updated }}</strong> actualizadas</p>
+                        <p><strong>{{ cant_created }}</strong> creadas<br><strong>{{ cant_updated }}</strong>
+                            actualizadas</p>
                     </div>
                 </div>
             </div>
@@ -432,16 +458,16 @@
 
         <!-- ERRORES -->
         {% if errores %}
-            <div class="card-container">
-                <div class="alert alert-danger">
-                    <strong><i class="bi bi-exclamation-circle"></i> Errores detectados:</strong>
-                    <ul class="mb-0 mt-2">
-                        {% for e in errores %}
-                            <li>{{ e }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+        <div class="card-container">
+            <div class="alert alert-danger">
+                <strong><i class="bi bi-exclamation-circle"></i> Errores detectados:</strong>
+                <ul class="mb-0 mt-2">
+                    {% for e in errores %}
+                    <li>{{ e }}</li>
+                    {% endfor %}
+                </ul>
             </div>
+        </div>
         {% endif %}
 
         <!-- SECCIÓN PROCESAR FACTORES -->
@@ -456,105 +482,88 @@
                     </label>
                     {{ form.file_fob }}
                 </div>
+
+                <!-- SELECCIÓN DE RUTA -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="bi bi-signpost-split"></i> Seleccionar Ruta</label>
+                    <div style="max-width: 250px;">
+                        {{ form.ruta }}
+                    </div>
+                </div>
+
+                <!-- SELECCIÓN DE PAÍSES (Movidio aquí) -->
+                <div class="countries-card mb-3" id="filtrosPaises">
+                    <h5><i class="bi bi-geo-alt"></i> Seleccionar País Destino</h5>
+                    <div class="d-flex flex-wrap justify-content-center gap-2">
+                        {% for pais in paises %}
+                        <input class="form-check-input country-filter" type="checkbox" name="paises"
+                            id="pais_{{ pais.codigo }}" value="{{ pais.codigo }}" data-country="{{ pais.codigo }}">
+                        <label class="radio-btn" for="pais_{{ pais.codigo }}">{{ pais.nombre }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary w-20">
                     <i class="bi bi-play-circle"></i> Calcular
                 </button>
             </form>
         </div>
 
-        <!-- SELECCIÓN DE PAÍSES 
-        <div class="card-container">
-            <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="countries-card">
-                    <h5><i class="bi bi-geo-alt"></i> Filtrar por País</h5>
-                    <div class="d-flex flex-wrap justify-content-center gap-2">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="paises" id="pais_sv" value="El Salvador">
-                            <label class="btn btn-outline-primary btn-sm" for="pais_sv">El Salvador</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="paises" id="pais_gt" value="Guatemala">
-                            <label class="btn btn-outline-primary btn-sm" for="pais_gt">Guatemala</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="paises" id="pais_hn" value="Honduras">
-                            <label class="btn btn-outline-primary btn-sm" for="pais_hn">Honduras</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="paises" id="pais_cr" value="Costa Rica">
-                            <label class="btn btn-outline-primary btn-sm" for="pais_cr">Costa Rica</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="paises" id="pais_ni" value="Nicaragua">
-                            <label class="btn btn-outline-primary btn-sm" for="pais_ni">Nicaragua</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="paises" id="pais_pa" value="Panamá">
-                            <label class="btn btn-outline-primary btn-sm" for="pais_pa">Panamá</label>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-center mt-3">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-funnel"></i> Aplicar Filtros
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>-->
-
         <!-- RESULTADOS -->
         {% if tabla_resultado %}
-            <div class="card-container">
-                <h4><i class="bi bi-table"></i> Costo Estándar</h4>
-                <div class="text-end mb-3">
-                    <a href="{% url 'descargar_excel' %}" class="btn btn-success">
-                        <i class="bi bi-download"></i> Descargar Excel
-                    </a>
-                </div>
-                <div class="table-wrapper">
-                    <div class="table-responsive">{{ tabla_resultado|safe }}</div>
-                </div>
+        <div class="card-container">
+            <h4><i class="bi bi-table"></i> Costo Estándar</h4>
+            <div class="text-end mb-3">
+                <a id="downloadExcel" data-base="{% url 'descargar_excel' %}" href="{% url 'descargar_excel' %}"
+                    class="btn btn-success">
+                    <i class="bi bi-download"></i> Descargar Excel
+                </a>
             </div>
+            <div class="table-wrapper">
+                <div class="table-responsive">{{ tabla_resultado|safe }}</div>
+            </div>
+        </div>
         {% endif %}
 
         <!-- TABLA FLETES -->
         {% if tabla_fletes %}
-            <div class="card-container">
-                <h4><i class="bi bi-truck"></i> Datos Fletes</h4>
-                <div class="table-wrapper">
-                    <div class="table-responsive">{{ tabla_fletes|safe }}</div>
-                </div>
+        <div class="card-container">
+            <h4><i class="bi bi-truck"></i> Datos Fletes</h4>
+            <div class="table-wrapper">
+                <div class="table-responsive">{{ tabla_fletes|safe }}</div>
             </div>
+        </div>
         {% endif %}
 
         <!-- TABLA CANTIDADES -->
         {% if tabla_cantidades %}
-            <div class="card-container">
-                <h4><i class="bi bi-box"></i> Datos Cantidades</h4>
-                <div class="table-wrapper">
-                    <div class="table-responsive">{{ tabla_cantidades|safe }}</div>
-                </div>
+        <div class="card-container">
+            <h4><i class="bi bi-box"></i> Datos Cantidades</h4>
+            <div class="table-wrapper">
+                <div class="table-responsive">{{ tabla_cantidades|safe }}</div>
             </div>
+        </div>
         {% endif %}
 
     </div>
 
     <!-- MODAL MANTENIMIENTO -->
-    <div class="modal fade" id="mantenimientoModal" tabindex="-1" aria-labelledby="mantenimientoModalLabel" aria-hidden="true">
+    <div class="modal fade" id="mantenimientoModal" tabindex="-1" aria-labelledby="mantenimientoModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-white">
                     <h5 class="modal-title" id="mantenimientoModalLabel">
                         <i class="bi bi-gear"></i> Actualizar Tablas
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
                 </div>
 
                 <div class="modal-body">
                     <form method="POST" enctype="multipart/form-data" id="mantenimientoForm">
                         {% csrf_token %}
-                        
+
                         <div class="upload-section section-fob mb-3">
                             <label class="upload-label" for="id_file_cantidades">
                                 <i class="bi bi-file-earmark-spreadsheet"></i>
@@ -584,5 +593,137 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Sistema de filtros dinámicos por país con Radio Buttons
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mostrar nombre del archivo seleccionado
+            const fileFobInput = document.querySelector('input[name="file_fob"]');
+            const fileFobLabel = document.querySelector('label[for="id_file_fob"]');
+
+            if (fileFobInput && fileFobLabel) {
+                fileFobInput.addEventListener('change', function () {
+                    if (this.files && this.files[0]) {
+                        fileFobLabel.innerHTML = '<i class="bi bi-file-earmark-spreadsheet"></i> ' + this.files[0].name;
+                    } else {
+                        fileFobLabel.innerHTML = '<i class="bi bi-file-earmark-spreadsheet"></i> Selecciona archivo Excel';
+                    }
+                });
+            }
+
+            const countryFilters = document.querySelectorAll('.country-filter');
+            const filtrosPaises = document.getElementById('filtrosPaises');
+
+            // Mostrar filtros siempre (ya no se ocultan si no hay tabla)
+            // const tablaResultado = document.querySelector('table');
+            // if (!tablaResultado) {
+            //     if (filtrosPaises) filtrosPaises.style.display = 'none';
+            //     return;
+            // }
+
+            // Función para actualizar visibilidad de columnas
+            function actualizarColumnasVisibles() {
+                const paisesSeleccionados = Array.from(countryFilters)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                // Guardar preferencia en localStorage
+                localStorage.setItem('paisesSeleccionados', JSON.stringify(paisesSeleccionados));
+
+                // Actualizar estilo de botones (activos)
+                countryFilters.forEach(cb => {
+                    const label = document.querySelector(`label[for="${cb.id}"]`);
+                    if (label) {
+                        if (cb.checked) {
+                            label.classList.add('active');
+                        } else {
+                            label.classList.remove('active');
+                        }
+                    }
+                });
+
+                // Obtener todas las columnas de la tabla
+                const tabla = document.querySelector('.table-responsive table');
+                if (!tabla) return;
+
+                const headers = tabla.querySelectorAll('th');
+
+                // Columnas base siempre visibles (quitamos las columnas por país como HONORARIOS/ALMACENAJE/SEGURO)
+                const columnasBase = ['PAIS ORIGEN', 'GRUPO ARTICULOS', 'PRECIO DE VENTA', 'FOB', 'COMISION CAT', 'ROYALTY', 'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO', 'COSTO AIT', 'COMISION AIT', 'FOB AIT'];
+
+                // Palabras clave que deben aparecer para cada país (según tu pedido)
+                const paisKeywords = ['ALMACENAJE', 'HONORARIOS', 'XRAY', 'CUSTODIO', 'FLETE LOCAL', 'FLETE LOCAL PAIS', 'FLETE TERRESTRE', 'OTROS GASTOS', 'SEGURO', 'DAI', 'LANDED', 'FACTOR'];
+
+                headers.forEach((header, index) => {
+                    const raw = header.textContent || '';
+                    const headerText = raw.trim().toUpperCase().replace(/\s+/g, ' ');
+                    const cells = tabla.querySelectorAll(`tbody tr td:nth-child(${index + 1})`);
+
+                    // Mostrar si es columna base
+                    let mostrar = columnasBase.some(col => headerText.includes(col));
+
+                    if (!mostrar && paisesSeleccionados.length) {
+                        // Normalizar para tokens (elimina caracteres no alfanuméricos)
+                        const normalized = raw.toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+                        const tokens = normalized.split(/\s+/).filter(Boolean);
+
+                        // Detectar si header contiene alguna de las palabras clave
+                        const tieneKeyword = paisKeywords.some(k => headerText.includes(k));
+
+                        // Detectar si cualquiera de los países seleccionados aparece en headerText o tokens
+                        const anyCountryMatch = paisesSeleccionados.some(p => {
+                            const rx = new RegExp('\\b' + p + '\\b');
+                            return rx.test(headerText) || tokens.includes(p);
+                        });
+
+                        // Aceptar también formatos con sufijos intermedios como 'CA' o 'ASI' (ej: 'ALMACENAJE CA HN')
+                        const tieneSufijoComun = tokens.includes('ASI') || tokens.includes('ASIA') || tokens.includes('CA');
+
+                        // Mostrar si tenemos keyword y además detectamos alguno de los países seleccionados
+                        if (tieneKeyword && (anyCountryMatch || (tieneSufijoComun && tokens.length && paisesSeleccionados.includes(tokens[tokens.length - 1])))) {
+                            mostrar = true;
+                        }
+
+                        // Además: si la cabecera termina con alguno de los códigos seleccionados y contiene alguna palabra clave parcial
+                        if (!mostrar && tokens.length > 0 && paisesSeleccionados.includes(tokens[tokens.length - 1])) {
+                            const joined = tokens.join(' ');
+                            if (paisKeywords.some(k => joined.includes(k))) {
+                                mostrar = true;
+                            }
+                        }
+                    }
+
+                    header.style.display = mostrar ? '' : 'none';
+                    cells.forEach(cell => cell.style.display = mostrar ? '' : 'none');
+                });
+
+                // Actualizar enlace de descarga para incluir los países seleccionados
+                const downloadLink = document.getElementById('downloadExcel');
+                if (downloadLink) {
+                    const base = downloadLink.dataset.base || downloadLink.getAttribute('href');
+                    const param = paisesSeleccionados.length ? `?pais=${paisesSeleccionados.join(',')}` : '';
+                    downloadLink.href = `${base}${param}`;
+                }
+            }
+
+            // Event listeners para radio buttons
+            countryFilters.forEach(filter => {
+                filter.addEventListener('change', actualizarColumnasVisibles);
+            });
+
+            // Cargar preferencia guardada (varios países)
+            const paisesGuardados = JSON.parse(localStorage.getItem('paisesSeleccionados') || '[]');
+            if (Array.isArray(paisesGuardados) && paisesGuardados.length) {
+                paisesGuardados.forEach(p => {
+                    const cb = document.querySelector(`input.country-filter[value="${p}"]`);
+                    if (cb) cb.checked = true;
+                });
+            }
+
+            // Inicializar columnas
+            actualizarColumnasVisibles();
+        });
+    </script>
 </body>
+
 </html>
