@@ -164,7 +164,12 @@ def calcular_resultado(df_fob, ruta='IPL'):
                 flete_valor = flete.flete_ipl
 
             flete_unitario = round(float(flete_valor or 0) / unidades.unidades_contenedor, 5)
-            almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 60, 5)
+            
+            if unidades.grupo_articulo[:3] == "TNF" or  unidades.grupo_articulo[:4] == "CATR":
+                almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 270, 5)
+            else:
+                almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 60, 5)
+
             seguro = round((fob_val + flete_unitario) * 0.002442, 5)
 
             cfs = round(739 / unidades.unidades_contenedor, 5) if flete.pais.lower() == 'china' else 0
@@ -242,12 +247,12 @@ def calcular_resultado(df_fob, ruta='IPL'):
                 'FLETE INTERNACIONAL': flete_unitario,
                 'THC': thc,
                 'CL ASIA': cl_asia,
-                'HONORARIOS': honorarios,
+                'HONORARIOS BFI': honorarios,
                 'TRANSPORTE LOCAL': transporte_local,
                 'RECEPCION': recepcion,
                 'DESPACHO': despacho,
-                'ALMACENAJE': almacenaje,
-                'SEGURO': seguro,
+                'ALMACENAJE BFI': almacenaje,
+                'SEGURO IMPORT': seguro,
                 'COSTO AIT': costo_ait,
                 'COMISION AIT': comision_ait,
                 'FOB AIT': fob_ait,
