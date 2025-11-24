@@ -1,6 +1,6 @@
 # invoice_description/utils.py
 import fitz  # PyMuPDF
-from .models import Articulo
+from .models import Articulo, Origen
 import io
 
 def reemplazar_codigos_pdf(file_obj):
