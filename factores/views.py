@@ -377,9 +377,23 @@ def descargar_excel_resultados(request):
     headers = list(resultados[0].keys())
 
     # Columnas base que siempre exportamos (mismo criterio que en template)
-    columnas_base = ['PAIS ORIGEN', 'GRUPO ARTICULOS', 'PRECIO DE VENTA', 'FOB', 'COMISION CAT', 'ROYALTY', 'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO', 'COSTO AIT', 'COMISION AIT', 'FOB AIT']
+    # He agregado columnas calculadas adicionales que se generan en la función
+    # `calcular_resultado` para que siempre salgan en el Excel de descarga.
+    columnas_base = [
+        'PAIS ORIGEN', 'GRUPO ARTICULOS', 'PRECIO DE VENTA', 'FOB', 'COMISION CAT', 'ROYALTY',
+        'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO',
+        'HONORARIOS BFI', 'ALMACENAJE BFI', 'SEGURO IMPORT',
+        'COSTO AIT', 'COMISION AIT', 'FOB AIT',
+        'NODO PROVEEDOR', 'NODO IMPORTACION', 'NODO BFI', 'NODO AIT NH'
+    ]
 
-    pais_keywords = ['ALMACENAJE', 'HONORARIOS', 'XRAY', 'CUSTODIO', 'FLETE LOCAL', 'FLETE LOCAL PAIS', 'FLETE TERRESTRE', 'OTROS GASTOS', 'SEGURO', 'DAI', 'LANDED', 'FACTOR']
+    # Keywords para detectar columnas por país (se combinan con el código de país)
+    # Añadimos nodos y exportacion para incluir encabezados como "NODO EXPORTACION SV"
+    pais_keywords = [
+        'ALMACENAJE', 'HONORARIOS', 'XRAY', 'CUSTODIO', 'FLETE LOCAL', 'FLETE LOCAL PAIS',
+        'FLETE TERRESTRE', 'OTROS GASTOS', 'SEGURO', 'DAI', 'LANDED', 'FACTOR',
+        'NODO', 'EXPORTACION'
+    ]
 
     # Si no se especifica país, exportar todo
     if not selected_paises:
