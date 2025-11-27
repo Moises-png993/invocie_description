@@ -201,6 +201,8 @@ def calcular_resultado(df_fob, ruta='IPL'):
             nodo_importacion = cfs + flete_unitario + thc + cl_asia  + seguro + transporte_local
             nodo_bfi = honorarios + recepcion + despacho + almacenaje
             nodo_ait_nh = comision_ait
+
+            factor_ait = round(costo_ait / fob_val, 5)
             # =====================
             # Calculo por país genérico
             # =====================
@@ -266,6 +268,7 @@ def calcular_resultado(df_fob, ruta='IPL'):
                 'NODO IMPORTACION': nodo_importacion,
                 'NODO BFI': nodo_bfi,
                 'NODO AIT NH': nodo_ait_nh,
+                'FACTOR AIT': factor_ait,
                 **{f'NODO EXPORTACION {p}': resultados_pais[p]['NODO_EXPORTACION'] for p in resultados_pais},
                 # Cargar dinámicamente los resultados por país
                 **{f'ALMACENAJE CA {p}': resultados_pais[p]['ALMACENAJE'] for p in resultados_pais},
@@ -384,7 +387,7 @@ def descargar_excel_resultados(request):
         'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO',
         'HONORARIOS BFI', 'ALMACENAJE BFI', 'SEGURO IMPORT',
         'COSTO AIT', 'COMISION AIT', 'FOB AIT',
-        'NODO PROVEEDOR', 'NODO IMPORTACION', 'NODO BFI', 'NODO AIT NH'
+        'NODO PROVEEDOR', 'NODO IMPORTACION', 'NODO BFI', 'NODO AIT NH', 'FACTOR AIT'
     ]
 
     # Keywords para detectar columnas por país (se combinan con el código de país)
