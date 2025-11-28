@@ -196,7 +196,13 @@ def calcular_resultado(df_fob, ruta='IPL'):
             costo_ait = fob_val + flete_unitario + cfs + thc + cl_asia + honorarios + transporte_local + almacenaje + seguro + recepcion + despacho + comision_cat + royalty
             comision_ait = round(costo_ait * 0.12, 5)
             fob_ait = costo_ait + comision_ait
+            
+            nodo_proveedor = fob_val + comision_cat + royalty
+            nodo_importacion = cfs + flete_unitario + thc + cl_asia  + seguro + transporte_local
+            nodo_bfi = honorarios + recepcion + despacho + almacenaje
+            nodo_ait_nh = comision_ait
 
+            factor_ait = round(costo_ait / fob_val, 5)
             # =====================
             # Calculo por país genérico
             # =====================
@@ -213,12 +219,13 @@ def calcular_resultado(df_fob, ruta='IPL'):
                 custodio_ca = costo.get('custodio', 0) / (unidades.unidades_contenedor * 1.54)
                 flete_terrestre_ca = costo.get('flete_terrestre_ca', 0) / (unidades.unidades_contenedor * 1.54)
                 otros_gastos = costo.get('otros_gastos', 0) / (unidades.unidades_contenedor * 1.54)
-
                 seguro_pais = (fob_ait + flete_local) * 0.002442
                 if flete.pais.lower() in ('méxico', 'guatemala', 'el salvador', 'alemania', 'nicaragua'):
                     dai_pais = 0
                 else:
                     dai_pais = (fob_ait + flete_local + seguro_pais) * 0.15
+
+                nodo_exportacion = honorarios_aduanales + flete_local + seguro_pais + dai_pais + inspection_no_intrusiva + almacenaje_local + custodio_ca + flete_terrestre_ca + otros_gastos
                 landed = fob_ait + honorarios_aduanales + flete_local + seguro_pais + dai_pais + inspection_no_intrusiva + almacenaje_local + custodio_ca + flete_terrestre_ca + otros_gastos
                 factor = round(landed / fob_val, 5)
 
@@ -233,7 +240,8 @@ def calcular_resultado(df_fob, ruta='IPL'):
                     'INSPECCION': inspection_no_intrusiva,
                     'CUSTODIO_CA': custodio_ca,
                     'FLETE_TERRESTRE': flete_terrestre_ca,
-                    'OTROS_GASTOS': otros_gastos
+                    'OTROS_GASTOS': otros_gastos,
+                    'NODO_EXPORTACION': nodo_exportacion,
                 }
 
             resultados.append({
@@ -256,7 +264,12 @@ def calcular_resultado(df_fob, ruta='IPL'):
                 'COSTO AIT': costo_ait,
                 'COMISION AIT': comision_ait,
                 'FOB AIT': fob_ait,
-
+                'NODO PROVEEDOR': nodo_proveedor,
+                'NODO IMPORTACION': nodo_importacion,
+                'NODO BFI': nodo_bfi,
+                'NODO AIT NH': nodo_ait_nh,
+                'FACTOR AIT': factor_ait,
+                **{f'NODO EXPORTACION {p}': resultados_pais[p]['NODO_EXPORTACION'] for p in resultados_pais},
                 # Cargar dinámicamente los resultados por país
                 **{f'ALMACENAJE CA {p}': resultados_pais[p]['ALMACENAJE'] for p in resultados_pais},
                 **{f'HONORARIOS {p}': resultados_pais[p]['HONORARIOS'] for p in resultados_pais},
@@ -367,9 +380,23 @@ def descargar_excel_resultados(request):
     headers = list(resultados[0].keys())
 
     # Columnas base que siempre exportamos (mismo criterio que en template)
-    columnas_base = ['PAIS ORIGEN', 'GRUPO ARTICULOS', 'PRECIO DE VENTA', 'FOB', 'COMISION CAT', 'ROYALTY', 'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO', 'COSTO AIT', 'COMISION AIT', 'FOB AIT']
+    # He agregado columnas calculadas adicionales que se generan en la función
+    # `calcular_resultado` para que siempre salgan en el Excel de descarga.
+    columnas_base = [
+        'PAIS ORIGEN', 'GRUPO ARTICULOS', 'PRECIO DE VENTA', 'FOB', 'COMISION CAT', 'ROYALTY',
+        'CFS', 'FLETE INTERNACIONAL', 'THC', 'CL ASIA', 'TRANSPORTE LOCAL', 'RECEPCION', 'DESPACHO',
+        'HONORARIOS BFI', 'ALMACENAJE BFI', 'SEGURO IMPORT',
+        'COSTO AIT', 'COMISION AIT', 'FOB AIT',
+        'NODO PROVEEDOR', 'NODO IMPORTACION', 'NODO BFI', 'NODO AIT NH', 'FACTOR AIT'
+    ]
 
-    pais_keywords = ['ALMACENAJE', 'HONORARIOS', 'XRAY', 'CUSTODIO', 'FLETE LOCAL', 'FLETE LOCAL PAIS', 'FLETE TERRESTRE', 'OTROS GASTOS', 'SEGURO', 'DAI', 'LANDED', 'FACTOR']
+    # Keywords para detectar columnas por país (se combinan con el código de país)
+    # Añadimos nodos y exportacion para incluir encabezados como "NODO EXPORTACION SV"
+    pais_keywords = [
+        'ALMACENAJE', 'HONORARIOS', 'XRAY', 'CUSTODIO', 'FLETE LOCAL', 'FLETE LOCAL PAIS',
+        'FLETE TERRESTRE', 'OTROS GASTOS', 'SEGURO', 'DAI', 'LANDED', 'FACTOR',
+        'NODO', 'EXPORTACION'
+    ]
 
     # Si no se especifica país, exportar todo
     if not selected_paises:
