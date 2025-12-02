@@ -13,6 +13,7 @@ class UploadExcelForm(forms.Form):
         ('IPL', 'IPL'),
         ('BLUE', 'BLUE'),
         ('DIRECTO', 'DIRECTO'),
+        ('LUNO', 'LUNO'),
     ]
     ruta = forms.ChoiceField(choices=RUTA_CHOICES, label="Ruta", required=True, widget=forms.Select(attrs={'class': 'form-select'}))
 

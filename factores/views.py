@@ -160,15 +160,27 @@ def calcular_resultado(df_fob, ruta='IPL'):
                 flete_valor = flete.flete_blue
             elif ruta == 'DIRECTO':
                 flete_valor = flete.flete_directo
-            else:
+            elif ruta == 'LUNO':
+                flete_valor = flete.flete_luno
+            else:  
                 flete_valor = flete.flete_ipl
 
             flete_unitario = round(float(flete_valor or 0) / unidades.unidades_contenedor, 5)
             
             if unidades.grupo_articulo[:3] == "TNF" or  unidades.grupo_articulo[:4] == "CATR":
-                almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 270, 5)
+                if ruta == 'BLUE':
+                    almacenaje = round((1 / unidades.unidades_cbm) * 0.25 * 270, 5)
+                elif ruta == 'IPL':
+                    almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 270, 5)
+                else:
+                    almacenaje = round((1 / unidades.unidades_cbm) * 270, 5)
             else:
-                almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 60, 5)
+                if ruta == 'BLUE':
+                    almacenaje = round((1 / unidades.unidades_cbm) * 0.25 * 60, 5)
+                elif ruta == 'IPL':
+                    almacenaje = round((1 / unidades.unidades_cbm) * 0.35 * 60, 5)
+                else:
+                    almacenaje = round((1 / unidades.unidades_cbm) * 60, 5) 
 
             seguro = round((fob_val + flete_unitario) * 0.002442, 5)
 
@@ -207,6 +219,24 @@ def calcular_resultado(df_fob, ruta='IPL'):
             # Calculo por país genérico
             # =====================
             resultados_pais = {}
+            if ruta == 'LUNO':
+                cfs = 0
+                flete_unitario = 0
+                thc = 0
+                cl_asia = 0
+                honorarios = 0
+                transporte_local = 0
+                recepcion = 0
+                despacho = 0
+                almacenaje = 0
+                seguro = 0
+            if ruta == 'DIRECTO':
+                recepcion = 0
+                despacho = 0
+                transporte_local = 0
+                almacenaje = 0
+                
+                
 
             for codigo_pais in ['SV', 'GT', 'HN', 'CR', 'PA', 'NI']:
                 costo = costos_paises.get(codigo_pais, {})
