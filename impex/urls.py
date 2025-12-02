@@ -16,6 +16,7 @@ Including another URLconf
 """
 # impex/urls.py
 from django.contrib import admin
+from factores.admin import admin_interno
 from django.urls import path, include
 from invoice_description.views import procesar_pdf, convert_pdf_to_xlsx
 from simpex.views import login_view
@@ -23,6 +24,7 @@ from simpex.views import login_view
 urlpatterns = [
     path('', login_view, name='login'),
     path('admin/', admin.site.urls),
+    path('admin-interno/', admin_interno.urls),
     path('pdf/', procesar_pdf, name='procesar_pdf'),
     path('convertir-pdf/', convert_pdf_to_xlsx, name='convert_pdf_to_xlsx'),
     path('app/', include('simpex.urls')),

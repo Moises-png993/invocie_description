@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.shortcuts import render
 from .forms import UploadExcelForm
-from .models import Flete, Unidades, CostoPais
+from .models import Flete, Unidades, Tariff, TariffTable
 import openpyxl
 from django.http import HttpResponse
 from datetime import datetime
@@ -108,18 +108,24 @@ def save_unidades(df):
 def get_costos_paises():
     """Devuelve un diccionario con los costos por país."""
     costos = {}
-    for c in CostoPais.objects.all():
-        costos[c.pais.upper()] = {
-            'almacenaje': float(c.almacenaje or 0),
-            'honorarios_aduanales': float(c.honorarios_aduanales or 0),
-            'inspeccion_intrusiva': float(c.inspeccion_no_intrusiva or 0),
-            'custodio': float(c.custodio or 0),
-            'otros_gastos': float(c.otros_gastos or 0),
-            'flete_terrestre_ca': float(c.flete_terrestre_ca or 0),
-            'flete_local': float(c.flete_local or 0),
-        }
-    return costos
 
+    # Selecciona la tabla de tarifas que estás usando
+    tabla = TariffTable.objects.get(name="TU_TABLA_DE_TARIFAS")
+
+    # Trae todas las tarifas relacionadas
+    tarifas = Tariff.objects.filter(tariff_table=tabla).select_related("country", "cost_type")
+
+    for t in tarifas:
+        pais = t.country.code.upper()  # o t.country.name
+        tipo = t.cost_type.code  # o .name si prefieres nombres largos
+        valor = float(t.value or 0)
+
+        if pais not in costos:
+            costos[pais] = {}
+
+        costos[pais][tipo] = valor
+    print(costos)
+    return costos
 
 def calcular_resultado(df_fob, ruta='IPL'):
     """Realiza el cálculo completo de la tabla resultado."""
@@ -206,7 +212,11 @@ def calcular_resultado(df_fob, ruta='IPL'):
             comision_cat = fob_val * 0.2275 if unidades.grupo_articulo[:4] == "CATC" else 0
 
             costo_ait = fob_val + flete_unitario + cfs + thc + cl_asia + honorarios + transporte_local + almacenaje + seguro + recepcion + despacho + comision_cat + royalty
-            comision_ait = round(costo_ait * 0.12, 5)
+            if ruta == 'LUNO':
+                comision_ait = round(costo_ait * 0.10, 5)
+                print("entre")
+            else:
+                comision_ait = round(costo_ait * 0.12, 5)
             fob_ait = costo_ait + comision_ait
             
             nodo_proveedor = fob_val + comision_cat + royalty
