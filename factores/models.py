@@ -20,7 +20,7 @@ class Flete(models.Model):
     flete_ipl = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     flete_blue = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     flete_directo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-
+    flete_luno = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
 class CostoPais(models.Model):
     PAISES = [
